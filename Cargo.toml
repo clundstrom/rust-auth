@@ -1,0 +1,17 @@
+[package]
+name = "authio"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jsonwebtoken = "9.2.0"
+actix-web = "4.4.1"
+serde = "1.0.195"
+lazy_static = "1.4.0"
+dotenv = "0.15.0"
+log = { version = "0.4.20", features = ["kv_unstable_serde"] }
+env_logger = "0.10.1"
+ldap3 = { version = "0.11.3" }
+chrono = "0.4.31"
