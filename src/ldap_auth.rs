@@ -1,9 +1,7 @@
 use crate::config::CONFIG;
 use ldap3::{LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
 
-trait Authenticate {
-    fn authenticate(&self, username: &str, password: &str) -> bool;
-}
+use crate::traits::authenticate::Authenticate;
 
 impl Authenticate for LdapAuthenticate {
     fn authenticate(&self, username: &str, password: &str) -> bool {

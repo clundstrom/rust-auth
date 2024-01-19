@@ -1,21 +1,34 @@
 use crate::config::CONFIG;
-use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use jsonwebtoken::errors::ErrorKind;
-use jsonwebtoken::{decode, DecodingKey, Validation};
-use jwt::JWTClaim;
+use actix_web::{get, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use jsonwebtoken::errors::{Error, ErrorKind};
+use jsonwebtoken::TokenData;
+use jwt::{validate_token, JWTClaim};
 use log;
-use serde::Deserialize;
 
-mod auth;
 mod config;
 mod jwt;
+mod ldap_auth;
 mod permission;
+mod traits;
 
 /// Endpoint to create a JWT token
+///
+/// This function is responsible for creating a JWT token. It is an asynchronous function that returns a
+/// type that implements the `Responder` trait.
+/// This function is mapped to the "/login" route.
+///
+/// # Steps
+///
+/// 1. An instance of `LdapAuthenticate` is created with a username and password.
+/// 2. The `bind` method of the `LdapAuthenticate` instance is called to authenticate the user against the LDAP server.
+/// 3. A JWT token is created for the authenticated user.
+/// 4. If the token creation is successful, the token is returned in the response body with an HTTP status of 200.
+/// 5. If there is an error during token creation, an error message is logged and an HTTP status of 500 is
+/// returned with a generic error message.
 #[get("/login")]
 async fn create_token() -> impl Responder {
     // Create a new LDAPAuth struct with the username and password from the request
-    let mut ldap_auth = auth::LdapAuthenticate::new("username", "password");
+    let mut ldap_auth = ldap_auth::LdapAuthenticate::new("username", "password");
 
     // Bind to the LDAP server with the given credentials
     //let b = ldap_auth.bind().await;
@@ -32,67 +45,92 @@ async fn create_token() -> impl Responder {
     return HttpResponse::Ok().body(token);
 }
 
-#[derive(Deserialize)]
-struct Info {
-    username: String,
-}
-
-#[post("/create_user")]
-async fn create_user(info: web::Json<Info>) -> impl Responder {
-    let user = format!("Welcome {}!", info.username);
-
-    HttpResponse::Ok().body(user)
-}
-
-/// Test endpoint to validate an authenticated request
+/// Endpoint to validate a JWT token
+///
+/// This function is responsible for validating a JWT token. It is an asynchronous function that
+/// returns an `HttpResponse`.
+/// This function is mapped to the "/validate_request" route.
+///
+/// # Steps
+///
+/// 1. The JWT token is extracted from the request's Authorization header using the `extract_token` function.
+/// 2. If a token is found, it is validated using the `validate_token` function.
+/// 3. The result of the token validation is handled by the `handle_validation_result` function,
+/// which returns an appropriate `HttpResponse`.
+/// 4. If no token is found, an `HttpResponse::Unauthorized` is returned with a body of "No authorization header found".
+///
+/// # Arguments
+///
+/// * `req` - The HttpRequest from which the token is to be extracted and validated.
+///
+/// # Returns
+///
+/// * `HttpResponse` - The appropriate HttpResponse based on the token extraction and validation result.
 #[get("/validate_request")]
 async fn validate_request(req: HttpRequest) -> HttpResponse {
-    // Extract the token from the request's Authorization header
-    match req.headers().get("Authorization") {
-        Some(header_value) => {
-            if let Ok(token) = header_value.to_str() {
-                let token_str = token.trim_start_matches("Bearer ").trim();
-
-                match decode::<JWTClaim>(
-                    token_str,
-                    &DecodingKey::from_secret(&CONFIG.jwt_secret_key.as_ref()),
-                    &Validation::default(),
-                ) {
-                    Ok(_) => HttpResponse::Ok().body("Token valid").finish(),
-                    Err(err) => match *err.kind() {
-                        ErrorKind::InvalidToken => {
-                            HttpResponse::Unauthorized().body("Invalid token")
-                        }
-                        ErrorKind::ExpiredSignature => {
-                            HttpResponse::Unauthorized().body("Token has expired")
-                        }
-                        _ => HttpResponse::BadRequest().body("Invalid request"),
-                    },
-                }
-            } else {
-                HttpResponse::BadRequest().body("Invalid token format")
-            }
+    // Extract the token from the request
+    let token = extract_token(req).await;
+    match token {
+        // If a token is found, validate it
+        Some(token_str) => {
+            let validation_result = validate_token(token_str).await;
+            handle_validation_result(validation_result).await
         }
+
+        // If no token is found, return an Unauthorized response
         None => HttpResponse::Unauthorized().body("No authorization header found"),
     }
 }
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("OK")
+/// Extracts the token from the request's Authorization header.
+///
+/// # Arguments
+///
+/// * `req` - The HttpRequest from which the token is to be extracted.
+///
+/// # Returns
+///
+/// * `Option<String>` - The extracted token as a String if it exists, None otherwise.
+async fn extract_token(req: HttpRequest) -> Option<String> {
+    match req.headers().get("Authorization") {
+        Some(header_value) => {
+            if let Ok(token) = header_value.to_str() {
+                Some(token.trim_start_matches("Bearer ").trim().to_string())
+            } else {
+                None
+            }
+        }
+        None => None,
+    }
+}
+
+/// Handles the HttpResponse based on the result of the token validation.
+///
+/// # Arguments
+///
+/// * `validation_result` - The Result of the token validation.
+///
+/// # Returns
+///
+/// * `HttpResponse` - The appropriate HttpResponse based on the token validation result.
+async fn handle_validation_result(
+    validation_result: Result<TokenData<JWTClaim>, Error>,
+) -> HttpResponse {
+    match validation_result {
+        Ok(_) => HttpResponse::Ok().body("Token valid"),
+        Err(err) => match *err.kind() {
+            ErrorKind::InvalidToken => HttpResponse::Unauthorized().body("Invalid token"),
+            ErrorKind::ExpiredSignature => HttpResponse::Unauthorized().body("Token has expired"),
+            _ => HttpResponse::Unauthorized().body("Invalid request"),
+        },
+    }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
-    HttpServer::new(|| {
-        App::new()
-            .service(hello)
-            .service(create_token)
-            .service(validate_request)
-            .service(create_user)
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().service(create_token).service(validate_request))
+        .bind((CONFIG.http_bind_address.to_string(), CONFIG.http_port))?
+        .run()
+        .await
 }

@@ -1,3 +1,4 @@
+use dotenv::dotenv;
 use lazy_static::lazy_static;
 use std::env;
 
@@ -6,6 +7,8 @@ pub struct Config {
     pub jwt_secret_key: String,
     pub jwt_expiration_time_seconds: u64,
     pub ldap_url: String,
+    pub http_bind_address: String,
+    pub http_port: u16,
 }
 
 /// Constructor for Config struct that loads the configuration from the environment
@@ -17,6 +20,8 @@ pub struct Config {
 /// This is intentional, as the program should not be able to run without the **required** configuration.
 impl Config {
     pub fn new() -> Config {
+        dotenv().ok();
+
         let token_expire_seconds_str = env::var("JWT_EXPIRATION_TIME_SECONDS")
             .expect("JWT_EXPIRATION_TIME_SECONDS must be set");
         let token_expiration: u64 = token_expire_seconds_str
@@ -27,6 +32,8 @@ impl Config {
             jwt_secret_key: env::var("JWT_SECRET_KEY").expect("JWT_SECRET must be set"),
             jwt_expiration_time_seconds: token_expiration,
             ldap_url: env::var("LDAP_URL").expect("LDAP_URL must be set"),
+            http_bind_address: env::var("HTTP_BIND_ADDRESS").expect("HTTP_BIND_ADDRESS must be set"),
+            http_port: env::var("HTTP_PORT").expect("HTTP_PORT must be set").parse().unwrap(),
         }
     }
 }
