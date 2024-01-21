@@ -120,7 +120,13 @@ async fn handle_validation_result(
         Ok(_) => HttpResponse::Ok().body("Token valid"),
         Err(err) => match *err.kind() {
             ErrorKind::InvalidToken => HttpResponse::Unauthorized().body("Invalid token"),
+            ErrorKind::InvalidKeyFormat => HttpResponse::Unauthorized().body("Invalid key format"),
             ErrorKind::ExpiredSignature => HttpResponse::Unauthorized().body("Token has expired"),
+            ErrorKind::InvalidIssuer => HttpResponse::Unauthorized().body("Invalid issuer"),
+            ErrorKind::InvalidSubject => HttpResponse::Unauthorized().body("Invalid subject"),
+            ErrorKind::InvalidAudience => HttpResponse::Unauthorized().body("Invalid audience"),
+            ErrorKind::InvalidSignature => HttpResponse::Unauthorized().body("Invalid signature"),
+            ErrorKind::InvalidAlgorithm => HttpResponse::Unauthorized().body("Invalid algorithm"),
             _ => HttpResponse::Unauthorized().body("Invalid request"),
         },
     }
