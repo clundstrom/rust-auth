@@ -9,6 +9,8 @@ pub struct Config {
     pub ldap_url: String,
     pub http_bind_address: String,
     pub http_port: u16,
+    pub ad_base_dn: String,
+    pub ad_format: String,
 }
 
 /// Constructor for Config struct that loads the configuration from the environment
@@ -34,6 +36,8 @@ impl Config {
             ldap_url: env::var("LDAP_URL").expect("LDAP_URL must be set"),
             http_bind_address: env::var("HTTP_BIND_ADDRESS").expect("HTTP_BIND_ADDRESS must be set"),
             http_port: env::var("HTTP_PORT").expect("HTTP_PORT must be set").parse().unwrap(),
+            ad_base_dn: env::var("AD_BASE").expect("AD_BASE must be set"),
+            ad_format: env::var("AD_FORMAT").expect("AD_FORMAT must be set"),
         }
     }
 }

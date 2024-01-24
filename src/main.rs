@@ -1,10 +1,12 @@
 use crate::config::CONFIG;
-use actix_web::{get, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use auth_request::AuthRequest;
 use jsonwebtoken::errors::{Error, ErrorKind};
 use jsonwebtoken::TokenData;
 use jwt::{validate_token, JWTClaim};
 use log;
 
+mod auth_request;
 mod config;
 mod jwt;
 mod ldap_auth;
@@ -25,13 +27,17 @@ mod traits;
 /// 4. If the token creation is successful, the token is returned in the response body with an HTTP status of 200.
 /// 5. If there is an error during token creation, an error message is logged and an HTTP status of 500 is
 /// returned with a generic error message.
-#[get("/login")]
-async fn create_token() -> impl Responder {
+#[post("/login")]
+async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
+    // Extract the username and password from the request
+    let username = &auth.username;
+    let password = &auth.password;
+
     // Create a new LDAPAuth struct with the username and password from the request
-    let mut ldap_auth = ldap_auth::LdapAuthenticate::new("username", "password");
+    let mut ldap_auth = ldap_auth::LdapAuthenticate::new(&username, &password);
 
     // Bind to the LDAP server with the given credentials
-    //let b = ldap_auth.bind().await;
+    let b = ldap_auth.bind().await;
 
     let token = match jwt::create_token("user_id") {
         Ok(token) => token,

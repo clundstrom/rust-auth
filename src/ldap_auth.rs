@@ -38,27 +38,28 @@ impl LdapAuthenticate {
         ldap3::drive!(conn);
 
         let attrs = vec![
-            "objectClass",
             "cn",
-            "sn",
-            "description",
-            "displayName",
-            "employeeType",
-            "givenName",
-            "jpegPhoto",
-            "mail",
-            "ou",
             "title",
-            "uid",
-            "userPassword",
+            "memberOf",
+            "mail",
+            "thumbnailPhoto",
+            "displayName",
         ];
+
+        let filter = format!("(&(objectClass=person)(cn={}))", self.username);
+
+        // The bind_dn is the user's username with the AD_FORMAT appended
+        // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
+        let bind_dn= format!("CN={},{}", self.username, &CONFIG.ad_format);
+
+        ldap.simple_bind(&bind_dn, &self.password).await?;
 
         let search_entries: Result<SearchResult, LdapError> = ldap
             .search(
-                "ou=people,dc=ldapmock,dc=local",
+                &CONFIG.ad_base_dn,
                 Scope::Subtree,
-                "(objectClass=inetOrgPerson)",
-                vec!["*"],
+                &filter,
+                attrs,
             )
             .await;
 
@@ -67,7 +68,10 @@ impl LdapAuthenticate {
             Ok(result) => {
                 // Check if the LDAP operation was successful
                 match result.success() {
-                    Ok((entries, _)) => entries, // Assuming `entries` is the desired data
+                    Ok((entries, _)) => {
+                        println!("Entry {:?}", entries);
+                        entries
+                    } // Assuming `entries` is the desired data
                     Err(e) => {
                         // Handle LDAP operation failure
                         eprintln!("LDAP operation failed: {}", e);
@@ -95,6 +99,7 @@ impl LdapAuthenticate {
         }
 
         ldap.unbind().await?;
+
         Ok(())
     }
 }
