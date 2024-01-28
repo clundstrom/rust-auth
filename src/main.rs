@@ -11,7 +11,7 @@ mod config;
 mod jwt;
 mod ldap_auth;
 mod permission;
-mod access_kind;
+mod access;
 mod traits;
 
 /// Endpoint to create a JWT token

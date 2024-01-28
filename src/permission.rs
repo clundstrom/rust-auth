@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::access_kind::Access;
+use crate::access::Access;
 
 /// Used to define and describe a `permission`.
 ///
