@@ -29,8 +29,8 @@ sn: testersson
 mail: tester.testersson@example.com
 displayName: Tester Testersson
 Title: Tester R&D
-memberOf: CN=tool1, OU=P001,OU=GRP,OU=Data,DC=example,DC=com
-memberOf: CN=tool2, OU=P001,OU=GRP,OU=Data,DC=example,DC=com
-memberOf: CN=tool3, OU=P001,OU=GRP,OU=Data,DC=example,DC=com
-memberOf: CN=tool4, OU=P001,OU=GRP,OU=Data,DC=example,DC=com
+memberOf: CN=tool1,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
+memberOf: CN=tool2,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
+memberOf: CN=tool3,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
+memberOf: CN=tool4,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
 userPassword:: e1NTSEF9WHd4NENtVkpXSHk2MHIyRkI5ZVV1aHpyV0xpeXpmbEk=
