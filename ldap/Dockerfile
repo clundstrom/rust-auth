@@ -11,4 +11,6 @@ ENV LDAP_ROOT="dc=example,dc=com"
 ENV LDAP_SKIP_DEFAULT_TREE=no
 ENV LDAP_TLS=false
 
+EXPOSE 1389, 389, 636
+
 COPY users.ldif .
