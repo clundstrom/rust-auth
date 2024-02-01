@@ -1,5 +1,7 @@
+use std::error::Error;
 use crate::config::CONFIG;
 use ldap3::{LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
+use ldap3::LdapError::LdapResult;
 
 use crate::traits::authenticate::Authenticate;
 
@@ -41,8 +43,19 @@ impl LdapAuthenticate {
         // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
         let bind_dn = format!("CN={},{}", self.username, &CONFIG.ad_format);
 
-        ldap.simple_bind(&bind_dn, &self.password).await?;
-
+        match ldap.simple_bind(&bind_dn, &self.password).await {
+            Ok(res) => {
+                if res.success().is_ok() {
+                    println!("Authenticated");
+                } else {
+                    println!("Bind failed: Invalid credentials");
+                }
+            }
+            Err(err) => {
+                log::error!("Bind failed: {}", err);
+                return Err(err);
+            }
+        }
 
         // Ldap Search
         let filter = format!("(&(objectClass=person)(cn={}))", self.username);
