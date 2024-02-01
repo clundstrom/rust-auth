@@ -1,6 +1,6 @@
 # Starts a ldap server on port 1389 that give {username: tester, password: password}
 # dim-tool, perf-tool and lcm-tool access.
-FROM osixia/openldap:latest
+FROM osixia/openldap:1.5.0
 
 WORKDIR /
 

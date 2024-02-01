@@ -37,6 +37,15 @@ impl LdapAuthenticate {
 
         ldap3::drive!(conn);
 
+        // The bind_dn is the user's username with the AD_FORMAT appended
+        // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
+        let bind_dn = format!("CN={},{}", self.username, &CONFIG.ad_format);
+
+        ldap.simple_bind(&bind_dn, &self.password).await?;
+
+
+        // Ldap Search
+        let filter = format!("(&(objectClass=person)(cn={}))", self.username);
         let attrs = vec![
             "cn",
             "title",
@@ -45,22 +54,8 @@ impl LdapAuthenticate {
             "thumbnailPhoto",
             "displayName",
         ];
-
-        let filter = format!("(&(objectClass=person)(cn={}))", self.username);
-
-        // The bind_dn is the user's username with the AD_FORMAT appended
-        // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
-        let bind_dn= format!("CN={},{}", self.username, &CONFIG.ad_format);
-
-        ldap.simple_bind(&bind_dn, &self.password).await?;
-
         let search_entries: Result<SearchResult, LdapError> = ldap
-            .search(
-                &CONFIG.ad_base_dn,
-                Scope::Subtree,
-                &filter,
-                attrs,
-            )
+            .search(&CONFIG.ad_base_dn, Scope::Subtree, &filter, attrs)
             .await;
 
         // Handle the Result of the search operation
