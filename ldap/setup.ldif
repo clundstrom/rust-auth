@@ -1,0 +1,12 @@
+dn: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: jsmith
+title: Software Developer
+memberOf: CN=Developers,OU=Groups,DC=example,DC=com
+memberOf: CN=ProjectX,OU=Groups,DC=example,DC=com
+mail: jsmith@example.com
+thumbnailPhoto:
+displayName: John Smith
