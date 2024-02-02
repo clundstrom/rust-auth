@@ -5,11 +5,12 @@ use jsonwebtoken::errors::{Error, ErrorKind};
 use jsonwebtoken::TokenData;
 use jwt::{validate_token, JWTClaim};
 use log;
+use crate::traits::authenticate::Authenticate;
 
 mod auth_request;
 mod config;
 mod jwt;
-mod ldap_auth;
+mod ldap;
 mod permission;
 mod access;
 mod traits;
@@ -35,12 +36,21 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
     let password = &auth.password;
 
     // Create a new LDAPAuth struct with the username and password from the request
-    let mut ldap_auth = ldap_auth::LdapAuthenticate::new(&username, &password);
+    let ldap = ldap::LdapAuthenticate::new();
+    let create_token = ldap.authenticate(username, password).await;
 
-    // Bind to the LDAP server with the given credentials
-    let b = ldap_auth.bind().await;
+    // If the user is not authenticated, return an Unauthorized response
+    if !create_token {
+        return HttpResponse::Unauthorized().body("Invalid credentials");
+    }
 
-    let token = match jwt::create_token("user_id") {
+    // If the user is authenticated, lookup the user's permissions
+    // TODO: Implement the lookup of the user's permissions
+    // ..
+
+
+    // Create a JWT token for the user
+    let token = match jwt::create_token(&auth.username) {
         Ok(token) => token,
         Err(err) => {
             log::error!("Error creating token: {}", err);

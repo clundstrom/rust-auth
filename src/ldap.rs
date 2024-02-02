@@ -1,30 +1,71 @@
-use std::error::Error;
 use crate::config::CONFIG;
 use ldap3::{LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
-use ldap3::LdapError::LdapResult;
 
 use crate::traits::authenticate::Authenticate;
 
 impl Authenticate for LdapAuthenticate {
-    fn authenticate(&self, username: &str, password: &str) -> bool {
-        self.username == username && self.password == password
+    /// Authenticate a user against the LDAP server.
+    ///
+    /// # Arguments
+    /// * `username` - The username of the user to authenticate.
+    /// * `password` - The password of the user to authenticate.
+    /// # Returns
+    /// * `true` if the user is authenticated, `false` otherwise.
+    async fn authenticate(&self, username: &str, password: &str) -> bool {
+        let (conn, mut ldap) = match LdapConnAsync::new(&CONFIG.ldap_url).await {
+            Ok((conn, ldap)) => (conn, ldap),
+            Err(err) => {
+                log::error!(
+                    "Error connecting to LDAP server {}: {}",
+                    &CONFIG.ldap_url,
+                    err
+                );
+                return false;
+            }
+        };
+
+        ldap3::drive!(conn);
+
+        // The bind_dn is the user's username with the AD_FORMAT appended
+        // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
+        let bind_dn: String = format!("CN={},{}", username, &CONFIG.ad_format);
+
+        let is_authenticated: bool = match ldap.simple_bind(&bind_dn, password).await {
+            Ok(res) => {
+                if res.success().is_ok() {
+                    log::debug!("Authenticated");
+                    true
+                } else {
+                    log::debug!("Bind failed: Invalid credentials");
+                    false
+                }
+            }
+            Err(err) => {
+                log::error!("Bind failed: {}", err);
+                false
+            }
+        };
+
+        match ldap.unbind().await {
+            Ok(_) => {
+                log::debug!("Successfully unbound from LDAP server");
+            }
+            Err(err) => {
+                log::error!("Failed to unbind from LDAP server: {:?}", err);
+            }
+        }
+        return is_authenticated;
     }
 }
 
-pub(crate) struct LdapAuthenticate {
-    username: String,
-    password: String,
-}
+pub(crate) struct LdapAuthenticate {}
 
 impl LdapAuthenticate {
-    pub(crate) fn new(username: &str, password: &str) -> LdapAuthenticate {
-        LdapAuthenticate {
-            username: username.to_owned(),
-            password: password.to_owned(),
-        }
+    pub(crate) fn new() -> LdapAuthenticate {
+        LdapAuthenticate {}
     }
 
-    pub(crate) async fn bind(&mut self) -> Result<(), LdapError> {
+    pub(crate) async fn bind(&mut self, username: &str) -> Result<(), LdapError> {
         let (conn, mut ldap) = match LdapConnAsync::new(&CONFIG.ldap_url).await {
             Ok((conn, ldap)) => (conn, ldap),
             Err(err) => {
@@ -41,24 +82,11 @@ impl LdapAuthenticate {
 
         // The bind_dn is the user's username with the AD_FORMAT appended
         // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
-        let bind_dn = format!("CN={},{}", self.username, &CONFIG.ad_format);
+        let bind_dn = format!("CN={},{}", username, &CONFIG.ad_format);
 
-        match ldap.simple_bind(&bind_dn, &self.password).await {
-            Ok(res) => {
-                if res.success().is_ok() {
-                    println!("Authenticated");
-                } else {
-                    println!("Bind failed: Invalid credentials");
-                }
-            }
-            Err(err) => {
-                log::error!("Bind failed: {}", err);
-                return Err(err);
-            }
-        }
 
         // Ldap Search
-        let filter = format!("(&(objectClass=person)(cn={}))", self.username);
+        let filter = format!("(&(objectClass=person)(cn={}))", username);
         let attrs = vec![
             "cn",
             "title",
