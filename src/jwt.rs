@@ -66,6 +66,7 @@ pub(crate) fn issue_token(user_id: &str) -> Result<String, Error> {
 
     // The JWT token is encoded with the default header, the created claims, and the encoding key.
     let issued_token = encode(&Header::default(), &claims, &encoding_key);
+    log::debug!("Issued token: {:?}", issued_token);
     issued_token
 }
 
