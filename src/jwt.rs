@@ -40,7 +40,7 @@ pub(crate) struct JWTClaim {
 ///     Err(e) => println!("Error: {}", e),
 /// }
 /// ```
-pub(crate) fn create_token(user_id: &str) -> Result<String, Error> {
+pub(crate) fn issue_token(user_id: &str) -> Result<String, Error> {
     // The expiration time for the token is retrieved from the configuration.
     let expiration_seconds: &u64 = &CONFIG.jwt_expiration_time_seconds;
     // The expiration time is calculated by adding the expiration seconds to the current time.
@@ -56,6 +56,8 @@ pub(crate) fn create_token(user_id: &str) -> Result<String, Error> {
         permissions: vec![], // TODO: set permissions
     };
 
+
+    log::debug!("Issue: {:?}", claims);
     // The secret key for the JWT token is retrieved from the configuration.
     let secret = &CONFIG.jwt_secret_key;
 
@@ -63,7 +65,8 @@ pub(crate) fn create_token(user_id: &str) -> Result<String, Error> {
     let encoding_key = EncodingKey::from_secret(secret.as_ref());
 
     // The JWT token is encoded with the default header, the created claims, and the encoding key.
-    encode(&Header::default(), &claims, &encoding_key)
+    let issued_token = encode(&Header::default(), &claims, &encoding_key);
+    issued_token
 }
 
 /// Validates the provided JWT token.

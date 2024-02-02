@@ -49,7 +49,7 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
     // ..
 
     // Create a JWT token for the user
-    let token = match jwt::create_token(&auth.username) {
+    let token = match jwt::issue_token(&auth.username) {
         Ok(token) => token,
         Err(err) => {
             log::error!("Error creating token: {}", err);
