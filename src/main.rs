@@ -1,18 +1,18 @@
 use crate::config::CONFIG;
+use crate::traits::authenticate::Authenticate;
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use auth_request::AuthRequest;
 use jsonwebtoken::errors::{Error, ErrorKind};
 use jsonwebtoken::TokenData;
 use jwt::{validate_token, JWTClaim};
 use log;
-use crate::traits::authenticate::Authenticate;
 
+mod access;
 mod auth_request;
 mod config;
 mod jwt;
 mod ldap;
 mod permission;
-mod access;
 mod traits;
 
 /// Endpoint to create a JWT token
@@ -47,7 +47,6 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
     // If the user is authenticated, lookup the user's permissions
     // TODO: Implement the lookup of the user's permissions
     // ..
-
 
     // Create a JWT token for the user
     let token = match jwt::create_token(&auth.username) {
@@ -97,6 +96,11 @@ async fn validate_request(req: HttpRequest) -> HttpResponse {
         // If no token is found, return an Unauthorized response
         None => HttpResponse::Unauthorized().body("No authorization header found"),
     }
+}
+
+#[get("/")]
+async fn ping() -> impl Responder {
+    HttpResponse::Ok().body("OK")
 }
 
 /// Extracts the token from the request's Authorization header.
