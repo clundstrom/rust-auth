@@ -12,6 +12,6 @@ serde = "1.0.195"
 lazy_static = "1.4.0"
 dotenv = "0.15.0"
 log = { version = "0.4.20", features = ["kv_unstable_serde"] }
-env_logger = "0.10.1"
+env_logger = "0.11.1"
 ldap3 = { version = "0.11.3" }
 chrono = "0.4.31"
