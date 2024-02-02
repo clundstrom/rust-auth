@@ -1,10 +1,13 @@
 #!/bin/bash
 
-docker build -t ldap ldap
-docker build -t authio .
+# if -b is passed, build the images
 
+if [ "$1" == "-b" ]; then
+  docker build -t ldap ldap
+  docker build -t authio .
+fi
 
-docker rm -f ldap || echo "No container to remove"
+docker rm -f ldap authio || echo "No container to remove"
 
 docker run \
 	--name ldap \
@@ -16,9 +19,11 @@ docker run \
 sleep 5
 docker exec ldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w password -f users.ldif
 
+sleep 5
+
 docker run \
   --name authio \
   -d \
+  --network host \
   --env-file .env \
-  -p 8080:8080 \
   authio
