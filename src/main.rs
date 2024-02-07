@@ -1,20 +1,12 @@
-use crate::config::CONFIG;
-use crate::traits::authenticate::Authenticate;
-use crate::traits::authorize::Authorize;
+use authio::config::CONFIG;
+use authio::traits::authenticate::Authenticate;
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use auth_request::AuthRequest;
+use authio::auth_request::AuthRequest;
 use jsonwebtoken::errors::{Error, ErrorKind};
 use jsonwebtoken::TokenData;
-use jwt::{validate_token, JWTClaim};
+use authio::jwt::{validate_token, JWTClaim};
 use log;
-
-mod access;
-mod auth_request;
-mod config;
-mod jwt;
-mod ldap;
-mod permission;
-mod traits;
+use authio::{jwt, ldap};
 
 /// Endpoint to create a JWT token
 ///

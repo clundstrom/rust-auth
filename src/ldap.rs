@@ -62,10 +62,10 @@ impl Authenticate for LdapAuthenticate {
     }
 }
 
-pub(crate) struct LdapAuthenticate {}
+pub struct LdapAuthenticate {}
 
 impl LdapAuthenticate {
-    pub(crate) fn new() -> LdapAuthenticate {
+    pub fn new() -> LdapAuthenticate {
         LdapAuthenticate {}
     }
 

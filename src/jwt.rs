@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 /// * `exp` - The expiration of the token
 /// * `permissions` - The vector of permissions to be encoded in the token
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct JWTClaim {
+pub struct JWTClaim {
     sub: String,
     company: String,
     exp: usize,
@@ -40,7 +40,7 @@ pub(crate) struct JWTClaim {
 ///     Err(e) => println!("Error: {}", e),
 /// }
 /// ```
-pub(crate) fn issue_token(user_id: &str) -> Result<String, Error> {
+pub fn issue_token(user_id: &str) -> Result<String, Error> {
     // The expiration time for the token is retrieved from the configuration.
     let expiration_seconds: &u64 = &CONFIG.jwt_expiration_time_seconds;
     // The expiration time is calculated by adding the expiration seconds to the current time.
@@ -79,7 +79,7 @@ pub(crate) fn issue_token(user_id: &str) -> Result<String, Error> {
 /// # Returns
 ///
 /// * `Result<(), Error>` - Ok if the token is valid, Err otherwise.
-pub(crate) async fn validate_token(
+pub async fn validate_token(
     token_str: String,
 ) -> jsonwebtoken::errors::Result<TokenData<JWTClaim>> {
     decode::<JWTClaim>(

@@ -1,5 +1,5 @@
 use crate::permission;
 
-pub(crate) trait Authorize {
+pub trait Authorize {
     async fn resolve_permission(&self, identifier: &str) -> Vec<permission::Permission>;
 }
