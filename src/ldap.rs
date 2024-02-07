@@ -1,7 +1,18 @@
 use crate::config::CONFIG;
 use ldap3::{LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
+use crate::permission::Permission;
 
 use crate::traits::authenticate::Authenticate;
+use crate::traits::authorize::Authorize;
+
+impl Authorize for LdapAuthenticate{
+    async fn resolve_permission(&self, identifier: &str) -> Vec<Permission> {
+        todo!()
+
+
+
+    }
+}
 
 impl Authenticate for LdapAuthenticate {
     /// Authenticate a user against the LDAP server.
@@ -12,16 +23,9 @@ impl Authenticate for LdapAuthenticate {
     /// # Returns
     /// * `true` if the user is authenticated, `false` otherwise.
     async fn authenticate(&self, username: &str, password: &str) -> bool {
-        let (conn, mut ldap) = match LdapConnAsync::new(&CONFIG.ldap_url).await {
+        let (conn, mut ldap) = match self.create_ldap_connection().await {
             Ok((conn, ldap)) => (conn, ldap),
-            Err(err) => {
-                log::error!(
-                    "Error connecting to LDAP server {}: {}",
-                    &CONFIG.ldap_url,
-                    err
-                );
-                return false;
-            }
+            Err(_) => return false,
         };
 
         ldap3::drive!(conn);
@@ -65,17 +69,24 @@ impl LdapAuthenticate {
         LdapAuthenticate {}
     }
 
-    pub(crate) async fn bind(&mut self, username: &str) -> Result<(), LdapError> {
-        let (conn, mut ldap) = match LdapConnAsync::new(&CONFIG.ldap_url).await {
-            Ok((conn, ldap)) => (conn, ldap),
+    pub(crate) async fn create_ldap_connection(&self) -> Result<(LdapConnAsync, ldap3::Ldap), LdapError> {
+        match LdapConnAsync::new(&CONFIG.ldap_url).await {
+            Ok((conn, ldap)) => Ok((conn, ldap)),
             Err(err) => {
                 log::error!(
                     "Error connecting to LDAP server {}: {}",
                     &CONFIG.ldap_url,
                     err
                 );
-                return Err(err);
+                Err(err)
             }
+        }
+    }
+
+    pub(crate) async fn bind(&mut self, username: &str) -> Result<(), LdapError> {
+        let (conn, mut ldap) = match self.create_ldap_connection().await {
+            Ok((conn, ldap)) => (conn, ldap),
+            Err(e) => return Err(e),
         };
 
         ldap3::drive!(conn);
@@ -83,7 +94,6 @@ impl LdapAuthenticate {
         // The bind_dn is the user's username with the AD_FORMAT appended
         // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
         let bind_dn = format!("CN={},{}", username, &CONFIG.ad_format);
-
 
         // Ldap Search
         let filter = format!("(&(objectClass=person)(cn={}))", username);

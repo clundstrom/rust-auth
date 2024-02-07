@@ -1,5 +1,6 @@
 use crate::config::CONFIG;
 use crate::traits::authenticate::Authenticate;
+use crate::traits::authorize::Authorize;
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use auth_request::AuthRequest;
 use jsonwebtoken::errors::{Error, ErrorKind};
