@@ -1,6 +1,6 @@
 use crate::config::CONFIG;
 use crate::permission::Permission;
-use ldap3::{LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
+use ldap3::{LdapConnAsync, LdapError, LdapResult, ResultEntry, Scope, SearchEntry, SearchResult};
 
 use crate::traits::authenticate::Authenticate;
 use crate::traits::authorize::Authorize;
@@ -62,14 +62,7 @@ impl Authenticate for LdapAuthenticate {
             }
         };
 
-        match ldap.unbind().await {
-            Ok(_) => {
-                log::debug!("Successfully unbound from LDAP server");
-            }
-            Err(err) => {
-                log::error!("Failed to unbind from LDAP server: {:?}", err);
-            }
-        }
+        self.unbind_ldap(&mut ldap).await;
         return is_authenticated;
     }
 }
@@ -97,14 +90,45 @@ impl LdapAuthenticate {
         }
     }
 
+    pub(crate) async fn unbind_ldap(&self, ldap: &mut ldap3::Ldap) -> () {
+        match ldap.unbind().await {
+            Ok(_) => {
+                log::debug!("Successfully unbound from LDAP server");
+            }
+            Err(err) => {
+                log::error!("Failed to unbind from LDAP server: {:?}", err);
+            }
+        }
+    }
+
+    pub(crate) async fn unpack_search_results(&self, search_result: Result<SearchResult, LdapError>) -> Vec<ResultEntry> {
+        return match search_result {
+            Ok(result) => match result.success() {
+                Ok((entries, _)) => {
+                    log::debug!("Vector of entries: {:?}", entries);
+                    entries
+                }
+                Err(e) => {
+                    log::error!("No results: {}", e);
+                    vec![]
+                }
+            },
+            Err(e) => {
+                log::error!("LdapError: {}", e);
+                vec![]
+            }
+        };
+    }
+
     /// Lookup the permissions for a user.
-    pub(crate) async fn permission_lookup(
-        &self,
-        username: &str,
-    ) -> Result<SearchResult, LdapError> {
+    pub(crate) async fn permission_lookup(&self, username: &str) -> () {
         let (conn, mut ldap) = match self.create_ldap_connection().await {
             Ok((conn, ldap)) => (conn, ldap),
-            Err(err) => return Err(err),
+            Err(err) => {
+                log::error!("Error creating LDAP connection: {}", err);
+                // Return early if there is an error creating the LDAP connection
+                return;
+            }
         };
 
         ldap3::drive!(conn);
@@ -112,18 +136,18 @@ impl LdapAuthenticate {
         // Ldap Search
         let filter = format!("(&(objectClass=person)(cn={}))", username);
         let attrs = vec!["memberOf"];
-        let search_entries: Result<SearchResult, LdapError> = ldap
+        let search_result = ldap
             .search(&CONFIG.ad_base_dn, Scope::Subtree, &filter, attrs)
             .await;
 
-        ldap.unbind().await;
+        self.unbind_ldap(&mut ldap).await;
 
-        match search_entries {
-            Ok(entries) => Ok(entries),
-            Err(err) => {
-                log::error!("Error searching for user: {}", err);
-                Err(err)
-            }
+        // Handle the Result of the search operation
+        let res = self.unpack_search_results(search_result).await;
+
+        for entry in res {
+            let search_entry = SearchEntry::construct(entry);
+            log::debug!("Search Entry: {:?}", search_entry);
         }
     }
 }
