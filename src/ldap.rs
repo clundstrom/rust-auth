@@ -1,16 +1,28 @@
 use crate::config::CONFIG;
-use ldap3::{LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
 use crate::permission::Permission;
+use ldap3::{LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
 
 use crate::traits::authenticate::Authenticate;
 use crate::traits::authorize::Authorize;
 
-impl Authorize for LdapAuthenticate{
+impl Authorize for LdapAuthenticate {
+    /// Resolve the permissions for a user.
+    ///
+    /// If an error occurs during the permission lookup, an empty vector is returned.
+    ///
+    /// # Arguments
+    /// * `identifier` - The identifier of the user to resolve permissions for.
+    /// # Returns
+    /// * A vector of `Permission` objects for the user.
     async fn resolve_permission(&self, identifier: &str) -> Vec<Permission> {
-        todo!()
+        let permissions: Vec<Permission> = vec![];
 
+        // Lookup the permissions for the user
+        let search_result = self.permission_lookup(identifier).await;
 
+        // Todo: Implement the authorization mapping
 
+        permissions
     }
 }
 
@@ -37,7 +49,7 @@ impl Authenticate for LdapAuthenticate {
         let is_authenticated: bool = match ldap.simple_bind(&bind_dn, password).await {
             Ok(res) => {
                 if res.success().is_ok() {
-                    log::debug!("Authenticated");
+                    log::debug!("Bind successful: Authenticated");
                     true
                 } else {
                     log::debug!("Bind failed: Invalid credentials");
@@ -69,7 +81,9 @@ impl LdapAuthenticate {
         LdapAuthenticate {}
     }
 
-    pub(crate) async fn create_ldap_connection(&self) -> Result<(LdapConnAsync, ldap3::Ldap), LdapError> {
+    pub(crate) async fn create_ldap_connection(
+        &self,
+    ) -> Result<(LdapConnAsync, ldap3::Ldap), LdapError> {
         match LdapConnAsync::new(&CONFIG.ldap_url).await {
             Ok((conn, ldap)) => Ok((conn, ldap)),
             Err(err) => {
@@ -83,69 +97,33 @@ impl LdapAuthenticate {
         }
     }
 
-    pub(crate) async fn bind(&mut self, username: &str) -> Result<(), LdapError> {
+    /// Lookup the permissions for a user.
+    pub(crate) async fn permission_lookup(
+        &self,
+        username: &str,
+    ) -> Result<SearchResult, LdapError> {
         let (conn, mut ldap) = match self.create_ldap_connection().await {
             Ok((conn, ldap)) => (conn, ldap),
-            Err(e) => return Err(e),
+            Err(err) => return Err(err),
         };
 
         ldap3::drive!(conn);
 
-        // The bind_dn is the user's username with the AD_FORMAT appended
-        // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
-        let bind_dn = format!("CN={},{}", username, &CONFIG.ad_format);
-
         // Ldap Search
         let filter = format!("(&(objectClass=person)(cn={}))", username);
-        let attrs = vec![
-            "cn",
-            "title",
-            "memberOf",
-            "mail",
-            "thumbnailPhoto",
-            "displayName",
-        ];
+        let attrs = vec!["memberOf"];
         let search_entries: Result<SearchResult, LdapError> = ldap
             .search(&CONFIG.ad_base_dn, Scope::Subtree, &filter, attrs)
             .await;
 
-        // Handle the Result of the search operation
-        let res = match search_entries {
-            Ok(result) => {
-                // Check if the LDAP operation was successful
-                match result.success() {
-                    Ok((entries, _)) => {
-                        println!("Entry {:?}", entries);
-                        entries
-                    } // Assuming `entries` is the desired data
-                    Err(e) => {
-                        // Handle LDAP operation failure
-                        eprintln!("LDAP operation failed: {}", e);
-                        return Err(e.into()); // Convert LDAP error to your function's error type
-                    }
-                }
+        ldap.unbind().await;
+
+        match search_entries {
+            Ok(entries) => Ok(entries),
+            Err(err) => {
+                log::error!("Error searching for user: {}", err);
+                Err(err)
             }
-            Err(e) => {
-                return Err(e.into()); // Convert LDAP error to your function's error type
-            }
-        };
-
-        let result_length = res.len();
-
-        if result_length == 0 {
-            println!("No entries found");
-        } else {
-            println!("Found {} entries", result_length);
         }
-
-        for entry in res {
-            let search_entry = SearchEntry::construct(entry);
-            println!("{:?}", search_entry);
-            println!("");
-        }
-
-        ldap.unbind().await?;
-
-        Ok(())
     }
 }

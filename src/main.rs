@@ -1,12 +1,13 @@
-use authio::config::CONFIG;
-use authio::traits::authenticate::Authenticate;
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use authio::auth_request::AuthRequest;
+use authio::config::CONFIG;
+use authio::jwt::{validate_token, JWTClaim};
+use authio::traits::authenticate::Authenticate;
+use authio::traits::authorize::Authorize;
+use authio::{jwt, ldap};
 use jsonwebtoken::errors::{Error, ErrorKind};
 use jsonwebtoken::TokenData;
-use authio::jwt::{validate_token, JWTClaim};
 use log;
-use authio::{jwt, ldap};
 
 /// Endpoint to create a JWT token
 ///
@@ -39,7 +40,8 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
 
     // If the user is authenticated, lookup the user's permissions
     // TODO: Implement the lookup of the user's permissions
-    // ..
+    //
+    let permissions = ldap.resolve_permission(&username).await;
 
     // Create a JWT token for the user
     let token = match jwt::issue_token(&auth.username) {

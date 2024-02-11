@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::access::Access;
+use serde::{Deserialize, Serialize};
 
 /// Used to define and describe a `permission`.
 ///
@@ -11,7 +11,7 @@ use crate::access::Access;
 /// * `description` - The description of the permission
 /// * `access_kind` - The type of access the permission grants.
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct Permission {
+pub struct Permission {
     name: String,
     description: String,
     access_type: Access,
