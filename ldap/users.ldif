@@ -20,9 +20,7 @@ ou: CA
 
 dn: CN=tester,OU=CA,OU=User,OU=P001,OU=ID,OU=Data,DC=example,DC=com
 objectClass: top
-objectClass: person
-objectClass: organizationalPerson
-objectClass: user
+objectClass: inetOrgPerson
 objectClass: extensibleObject
 cn: tester
 sn: testersson
