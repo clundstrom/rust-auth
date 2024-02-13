@@ -1,24 +1,26 @@
-dn: OU=Data,DC=example,DC=com
+dn: OU=people,DC=example,DC=com
 objectClass: organizationalUnit
-ou: Data
+ou: people
 
-dn: OU=ID,OU=Data,DC=example,DC=com
+dn: OU=tools,DC=example,DC=com
 objectClass: organizationalUnit
-ou: ID
+ou: people
 
-dn: OU=P001,OU=ID,OU=Data,DC=example,DC=com
-objectClass: organizationalUnit
-ou: P001
+dn: CN=tool1,OU=tools,DC=example,DC=com
+objectClass: top
+objectClass: groupOfNames
+cn: tool1
+description: Tool 1 Group
+member:
 
-dn: OU=User,OU=P001,OU=ID,OU=Data,DC=example,DC=com
-objectClass: organizationalUnit
-ou: User
+dn: CN=tool2,OU=tools,DC=example,DC=com
+objectClass: top
+objectClass: groupOfNames
+cn: tool2
+description: Tool 2 Group
+member:
 
-dn: OU=CA,OU=User,OU=P001,OU=ID,OU=Data,DC=example,DC=com
-objectClass: organizationalUnit
-ou: CA
-
-dn: CN=tester,OU=CA,OU=User,OU=P001,OU=ID,OU=Data,DC=example,DC=com
+dn: CN=tester,OU=people,DC=example,DC=com
 objectClass: top
 objectClass: inetOrgPerson
 objectClass: extensibleObject
@@ -26,9 +28,7 @@ cn: tester
 sn: testersson
 mail: tester.testersson@example.com
 displayName: Tester Testersson
-Title: Tester R&D
-memberOf: CN=tool1,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
-memberOf: CN=tool2,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
-memberOf: CN=tool3,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
-memberOf: CN=tool4,OU=P001,OU=GRP,OU=Data,DC=example,DC=com
-userPassword:: e1NTSEF9WHd4NENtVkpXSHk2MHIyRkI5ZVV1aHpyV0xpeXpmbEk=
+title: Tester R&D
+memberOf: CN=tool1,OU=tools,DC=example,DC=com
+memberOf: CN=tool2,OU=tools,DC=example,DC=com
+userPassword: password
