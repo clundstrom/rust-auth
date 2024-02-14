@@ -30,7 +30,10 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
     let password = &auth.password;
 
     // Create a new LDAPAuth struct with the username and password from the request
-    let ldap = ldap::LdapAuthenticate::new();
+    let mut ldap = ldap::LdapAuthenticate::new();
+
+    // Initialize the LDAP connection
+    ldap.initialize().await;
     let create_token = ldap.authenticate(username, password).await;
 
     // If the user is not authenticated, return an Unauthorized response
@@ -40,8 +43,10 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
 
     // If the user is authenticated, lookup the user's permissions
     // TODO: Implement the lookup of the user's permissions
-    //
     let permissions = ldap.resolve_permission(&username).await;
+
+    // Unbind the LDAP connection
+    ldap.unbind_ldap().await;
 
     // Create a JWT token for the user
     let token = match jwt::issue_token(&auth.username) {

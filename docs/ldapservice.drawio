@@ -1,0 +1,49 @@
+<mxfile host="Electron" modified="2024-02-14T13:52:04.183Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="QnL3g2ub-M-N5pBSuGKc" version="23.0.2" type="device">
+  <diagram name="Page-1" id="CRQqdWaFMPwqnjaGn3B3">
+    <mxGraphModel dx="915" dy="823" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-13" value="depends on" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="SkL7lAc7dQeH5Ih_ooUz-1" target="SkL7lAc7dQeH5Ih_ooUz-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-1" value="Authenticate" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="610" y="310" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-14" value="depends on" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="SkL7lAc7dQeH5Ih_ooUz-2" target="SkL7lAc7dQeH5Ih_ooUz-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-15" value="depends on" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="SkL7lAc7dQeH5Ih_ooUz-2" target="SkL7lAc7dQeH5Ih_ooUz-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-2" value="Resolve Permissions" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="790" y="440" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="SkL7lAc7dQeH5Ih_ooUz-5" target="SkL7lAc7dQeH5Ih_ooUz-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="SkL7lAc7dQeH5Ih_ooUz-5" target="SkL7lAc7dQeH5Ih_ooUz-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-12" value="stores" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="SkL7lAc7dQeH5Ih_ooUz-5" target="SkL7lAc7dQeH5Ih_ooUz-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-5" value="LdapService" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="260" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-6" value="i" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="SkL7lAc7dQeH5Ih_ooUz-7" target="SkL7lAc7dQeH5Ih_ooUz-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-7" value="&lt;div&gt;API&lt;/div&gt;&lt;div&gt;create_token&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="260" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-8" value="&lt;h1&gt;Ldap Service&lt;br&gt;&lt;/h1&gt;&lt;ul style=&quot;font-size: 16px;&quot;&gt;&lt;li&gt;Creates a connection and stores it&lt;/li&gt;&lt;li&gt;Authenticate credentials with a BIND&lt;/li&gt;&lt;li&gt;After authenticate, call resolve permissions to create Permissions Object&lt;/li&gt;&lt;li&gt;Parse permissions and return a JWT token&lt;br&gt;&lt;/li&gt;&lt;/ul&gt;" style="text;html=1;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="20" width="510" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="SkL7lAc7dQeH5Ih_ooUz-9" value="Connection" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="610" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

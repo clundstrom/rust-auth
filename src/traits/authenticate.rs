@@ -1,3 +1,3 @@
 pub trait Authenticate {
-    async fn authenticate(&self, username: &str, password: &str) -> bool;
+    async fn authenticate(&mut self, username: &str, password: &str) -> bool;
 }
