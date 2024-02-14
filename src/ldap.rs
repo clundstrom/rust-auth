@@ -141,7 +141,13 @@ impl LdapAuthenticate {
     }
 
     pub async fn unbind_ldap(&mut self) -> () {
-        let ldap = self.ldap.as_mut().unwrap();
+        let ldap = match self.ldap.as_mut() {
+            Some(ldap) => ldap,
+            None => {
+                log::warn!("LDAP connection not initialized");
+                return;
+            }
+        };
 
         match ldap.unbind().await {
             Ok(_) => {
@@ -194,7 +200,13 @@ impl LdapAuthenticate {
         log::debug!("Filter: {:?}", filter);
         log::debug!("Attributes: {:?}", attrs);
 
-        let ldap: &mut Ldap = self.ldap.as_mut().unwrap();
+        let ldap: &mut Ldap = match self.ldap.as_mut() {
+            Some(ldap) => ldap,
+            None => {
+                log::warn!("LDAP connection not initialized");
+                return vec![];
+            }
+        };
 
         let search_result: Result<SearchResult, LdapError> =
             ldap.search(&bind_dn, Scope::Subtree, filter, attrs).await;
