@@ -44,7 +44,7 @@ impl Authenticate for LdapAuthenticate {
 
         // The bind_dn is the user's username with the AD_FORMAT appended
         // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
-        let bind_dn: String = format!("CN={},{}", username, &CONFIG.ad_format);
+        let bind_dn: String = format!("CN={},{}", username, CONFIG.ad_base_dn);
 
         let is_authenticated: bool = match ldap.simple_bind(&bind_dn, password).await {
             Ok(res) => {
@@ -78,7 +78,9 @@ impl LdapAuthenticate {
         &self,
     ) -> Result<(LdapConnAsync, ldap3::Ldap), LdapError> {
         match LdapConnAsync::new(&CONFIG.ldap_url).await {
-            Ok((conn, ldap)) => Ok((conn, ldap)),
+            Ok((conn, ldap)) => {
+                Ok((conn, ldap))
+            },
             Err(err) => {
                 log::error!(
                     "Error connecting to LDAP server {}: {}",
@@ -93,7 +95,6 @@ impl LdapAuthenticate {
     pub(crate) async fn unbind_ldap(&self, ldap: &mut ldap3::Ldap) -> () {
         match ldap.unbind().await {
             Ok(_) => {
-                log::debug!("Successfully unbound from LDAP server");
             }
             Err(err) => {
                 log::error!("Failed to unbind from LDAP server: {:?}", err);
@@ -133,9 +134,13 @@ impl LdapAuthenticate {
 
         ldap3::drive!(conn);
 
-        // Ldap Search
-        let filter = format!("(&(objectClass=person)(cn={}))", username);
-        let attrs = vec!["memberOf"];
+        let filter = &CONFIG.ad_format;
+        let attrs = CONFIG.ad_attrs.clone();
+
+
+        log::debug!("Filter: {:?}", filter);
+        log::debug!("Attributes: {:?}", attrs);
+
         let search_result = ldap
             .search(&CONFIG.ad_base_dn, Scope::Subtree, &filter, attrs)
             .await;
