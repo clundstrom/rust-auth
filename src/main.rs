@@ -42,14 +42,13 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
     }
 
     // If the user is authenticated, lookup the user's permissions
-    // TODO: Implement the lookup of the user's permissions
     let permissions = ldap.resolve_permission(&username).await;
 
     // Unbind the LDAP connection
     ldap.unbind_ldap().await;
 
     // Create a JWT token for the user
-    let token = match jwt::issue_token(&auth.username) {
+    let token = match jwt::issue_token(&auth.username, permissions) {
         Ok(token) => token,
         Err(err) => {
             log::error!("Error creating token: {}", err);

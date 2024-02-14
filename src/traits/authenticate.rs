@@ -1,3 +1,3 @@
 pub trait Authenticate {
-    async fn authenticate(&mut self, username: &str, password: &str) -> bool;
+    fn authenticate(&mut self, username: &str, password: &str) -> impl std::future::Future<Output = bool> + Send;
 }

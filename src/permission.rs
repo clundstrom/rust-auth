@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 /// * `access_kind` - The type of access the permission grants.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Permission {
-    name: String,
-    description: String,
-    access_type: Access,
+    pub(crate) name: String,
+    pub(crate) description: String,
+    pub(crate) access_type: Access,
 }

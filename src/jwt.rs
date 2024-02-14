@@ -34,13 +34,13 @@ pub struct JWTClaim {
 /// # Example
 ///
 /// ```
-/// let token = create_token("user123");
+/// let token = issue_token("user123", vec![]);
 /// match token {
 ///     Ok(t) => println!("Token: {}", t),
 ///     Err(e) => println!("Error: {}", e),
 /// }
 /// ```
-pub fn issue_token(user_id: &str) -> Result<String, Error> {
+pub fn issue_token(user_id: &str, permissions: Vec<Permission>) -> Result<String, Error> {
     // The expiration time for the token is retrieved from the configuration.
     let expiration_seconds: &u64 = &CONFIG.jwt_expiration_time_seconds;
     // The expiration time is calculated by adding the expiration seconds to the current time.
@@ -51,9 +51,9 @@ pub fn issue_token(user_id: &str) -> Result<String, Error> {
     // and the permissions are currently an empty vector (this should be set to the user's permissions).
     let claims = JWTClaim {
         sub: user_id.to_owned(),
-        company: "Dippen preb AB".to_owned(), // TODO: move to envvar
+        company: "Some Company".to_owned(),
         exp: expiration_time.timestamp() as usize,
-        permissions: vec![], // TODO: set permissions
+        permissions,
     };
 
 

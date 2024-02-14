@@ -1,6 +1,10 @@
+use crate::access::Access;
 use crate::config::CONFIG;
 use crate::permission::Permission;
-use ldap3::{drive, Ldap, LdapConnAsync, LdapError, LdapResult, ResultEntry, Scope, SearchEntry, SearchResult};
+use ldap3::{
+    drive, Ldap, LdapConnAsync, LdapError, Scope, SearchEntry,
+    SearchResult,
+};
 
 use crate::traits::authenticate::Authenticate;
 use crate::traits::authorize::Authorize;
@@ -18,6 +22,14 @@ impl Authorize for LdapAuthenticate {
         let permissions: Vec<Permission> = vec![];
         // Lookup the permissions for the user
         let search_result = self.permission_lookup(identifier).await;
+
+        if search_result.len() == 0 {
+            log::info!("No permissions found for user: {}", identifier);
+            return permissions;
+        }
+
+        let permissions: Vec<Permission> = Self::parse_search_entry(search_result);
+
         permissions
     }
 }
@@ -37,12 +49,12 @@ impl Authenticate for LdapAuthenticate {
         // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
         let bind_dn: String = format!("CN={},{}", username, CONFIG.ad_base_dn);
 
-        let mut ldap = match self.ldap.as_mut() {
+        let ldap = match self.ldap.as_mut() {
             Some(ldap) => ldap,
             None => {
                 log::error!("LDAP connection not initialized");
-                return false
-            },
+                return false;
+            }
         };
 
         let is_authenticated: bool = match ldap.simple_bind(&bind_dn, password).await {
@@ -66,7 +78,7 @@ impl Authenticate for LdapAuthenticate {
 }
 
 pub struct LdapAuthenticate {
-    ldap: Option<ldap3::Ldap>
+    ldap: Option<Ldap>,
 }
 
 impl LdapAuthenticate {
@@ -74,17 +86,46 @@ impl LdapAuthenticate {
         Self { ldap: None }
     }
 
+    /// Extract the permissions from the search results
+    ///
+    /// Map the search results to a vector of Permission objects
+    /// Default the access_type to READ
+    pub fn parse_search_entry(entries: Vec<SearchEntry>) -> Vec<Permission> {
+        let mut permissions: Vec<Permission> = vec![];
+
+        for entry in entries {
+            log::debug!("DN: {}", entry.dn);
+
+            if let Some(member_of) = entry.attrs.get("memberOf") {
+                for group in member_of {
+                    let group_name: Vec<&str> = group.split(",").collect();
+                    let group_name: Vec<&str> = group_name[0].split("=").collect();
+                    let group_name: &str = group_name[1];
+                    log::debug!("Group Name: {}", group_name);
+
+                    let perm = Permission {
+                        name: group_name.to_string(),
+                        description: entry.dn.clone(),
+                        access_type: Access::READ,
+                    };
+
+                    permissions.push(perm);
+                }
+            }
+        }
+        permissions
+    }
+
     /// Create a new LDAP connection
     ///
     /// Static function to create a new LDAP connection.
     /// Returns a Result object containing the LDAP connection and the LDAP object.
-    pub async fn initialize(&mut self)
-    {
+    pub async fn initialize(&mut self) {
         let (conn, ldap) = match LdapConnAsync::new(&CONFIG.ldap_url).await {
             Ok((conn, ldap)) => {
                 log::debug!("Connection successful.");
                 (conn, ldap)
-            },
+            }
             Err(err) => {
                 log::error!(
                     "Error connecting to LDAP server {}: {}",
@@ -100,7 +141,6 @@ impl LdapAuthenticate {
     }
 
     pub async fn unbind_ldap(&mut self) -> () {
-
         let ldap = self.ldap.as_mut().unwrap();
 
         match ldap.unbind().await {
@@ -116,11 +156,10 @@ impl LdapAuthenticate {
     pub(crate) async fn unpack_search_results(
         &self,
         search_result: Result<SearchResult, LdapError>,
-    ) -> Vec<ResultEntry> {
-        return match search_result {
+    ) -> Vec<SearchEntry> {
+        let entries = match search_result {
             Ok(result) => match result.success() {
                 Ok((entries, _)) => {
-
                     log::info!("Search OK. Entries: {:?}", entries.len());
                     entries
                 }
@@ -134,10 +173,19 @@ impl LdapAuthenticate {
                 vec![]
             }
         };
+
+        // Construct vec of SearchEntry from ResultEntry using map
+        let mut search_entries: Vec<SearchEntry> = vec![];
+
+        for entry in entries {
+            search_entries.push(SearchEntry::construct(entry));
+        }
+
+        search_entries
     }
 
     /// Lookup the permissions for a user.
-    pub(crate) async fn permission_lookup(&mut self, identifier: &str) -> () {
+    pub(crate) async fn permission_lookup(&mut self, identifier: &str) -> Vec<SearchEntry> {
         let filter: &str = &CONFIG.ad_filter_format;
         let attrs: Vec<String> = CONFIG.ad_attrs.clone();
         let bind_dn = format!("CN={},{}", identifier, CONFIG.ad_base_dn);
@@ -148,16 +196,9 @@ impl LdapAuthenticate {
 
         let ldap: &mut Ldap = self.ldap.as_mut().unwrap();
 
-        let search_result: Result<SearchResult, LdapError> = ldap
-            .search(&bind_dn, Scope::Subtree, filter, attrs)
-            .await;
+        let search_result: Result<SearchResult, LdapError> =
+            ldap.search(&bind_dn, Scope::Subtree, filter, attrs).await;
 
-        // Handle the Result of the search operation
-        let res = self.unpack_search_results(search_result).await;
-
-        for entry in res {
-            let search_entry = SearchEntry::construct(entry);
-            log::debug!("Search Entry: {:?}", search_entry);
-        }
+        self.unpack_search_results(search_result).await
     }
 }
