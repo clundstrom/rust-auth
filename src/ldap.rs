@@ -1,6 +1,6 @@
 use crate::config::CONFIG;
 use crate::permission::Permission;
-use ldap3::{drive, LdapConnAsync, LdapError, LdapResult, ResultEntry, Scope, SearchEntry, SearchResult};
+use ldap3::{drive, Ldap, LdapConnAsync, LdapError, LdapResult, ResultEntry, Scope, SearchEntry, SearchResult};
 
 use crate::traits::authenticate::Authenticate;
 use crate::traits::authorize::Authorize;
@@ -120,7 +120,8 @@ impl LdapAuthenticate {
         return match search_result {
             Ok(result) => match result.success() {
                 Ok((entries, _)) => {
-                    log::debug!("Vector of entries: {:?}", entries);
+
+                    log::info!("Search OK. Entries: {:?}", entries.len());
                     entries
                 }
                 Err(e) => {
@@ -137,16 +138,18 @@ impl LdapAuthenticate {
 
     /// Lookup the permissions for a user.
     pub(crate) async fn permission_lookup(&mut self, identifier: &str) -> () {
-        let filter = &CONFIG.ad_format;
-        let attrs = CONFIG.ad_attrs.clone();
+        let filter: &str = &CONFIG.ad_filter_format;
+        let attrs: Vec<String> = CONFIG.ad_attrs.clone();
+        let bind_dn = format!("CN={},{}", identifier, CONFIG.ad_base_dn);
 
+        log::debug!("Search base DN: {}", &CONFIG.ad_base_dn);
         log::debug!("Filter: {:?}", filter);
         log::debug!("Attributes: {:?}", attrs);
 
-        let ldap = self.ldap.as_mut().unwrap();
+        let ldap: &mut Ldap = self.ldap.as_mut().unwrap();
 
-        let search_result = ldap
-            .search(&CONFIG.ad_base_dn, Scope::Subtree, &filter, attrs)
+        let search_result: Result<SearchResult, LdapError> = ldap
+            .search(&bind_dn, Scope::Subtree, filter, attrs)
             .await;
 
         // Handle the Result of the search operation

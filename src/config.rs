@@ -10,7 +10,7 @@ pub struct Config {
     pub http_bind_address: String,
     pub http_port: u16,
     pub ad_base_dn: String,
-    pub ad_format: String,
+    pub ad_filter_format: String,
     pub ad_attrs: Vec<String>,
 }
 
@@ -38,7 +38,7 @@ impl Config {
             http_bind_address: env::var("HTTP_BIND_ADDRESS").expect("HTTP_BIND_ADDRESS must be set"),
             http_port: env::var("HTTP_PORT").expect("HTTP_PORT must be set").parse().unwrap(),
             ad_base_dn: env::var("AD_BASE_DN").expect("AD_BASE_DN must be set"),
-            ad_format: env::var("AD_FORMAT").expect("AD_FORMAT must be set"),
+            ad_filter_format: env::var("AD_FILTER_FORMAT").expect("AD_FILTER_FORMAT must be set"),
             ad_attrs: env::var("AD_FILTER_ATTRS")
                 .expect("AD_FILTER_ATTRS must be set")
                 .split(",")

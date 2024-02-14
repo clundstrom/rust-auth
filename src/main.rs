@@ -34,7 +34,7 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
 
     // Initialize the LDAP connection
     ldap.initialize().await;
-    let create_token = ldap.authenticate(username, password).await;
+    let create_token = ldap.authenticate(username,password).await;
 
     // If the user is not authenticated, return an Unauthorized response
     if !create_token {
