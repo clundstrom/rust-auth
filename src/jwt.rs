@@ -46,12 +46,9 @@ pub fn issue_token(user_id: &str, permissions: Vec<Permission>) -> Result<String
     // The expiration time is calculated by adding the expiration seconds to the current time.
     let expiration_time = Utc::now() + Duration::seconds(*expiration_seconds as i64);
 
-    // The claims for the JWT token are created. The subject is the user id, the company is hardcoded
-    // (this should be moved to an environment variable), the expiration time is set to the calculated expiration time,
-    // and the permissions are currently an empty vector (this should be set to the user's permissions).
     let claims = JWTClaim {
         sub: user_id.to_owned(),
-        company: "Some Company".to_owned(),
+        company: CONFIG.jwt_company.clone(),
         exp: expiration_time.timestamp() as usize,
         permissions,
     };

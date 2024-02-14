@@ -12,6 +12,7 @@ pub struct Config {
     pub ad_base_dn: String,
     pub ad_filter_format: String,
     pub ad_attrs: Vec<String>,
+    pub jwt_company: String,
 }
 
 /// Constructor for Config struct that loads the configuration from the environment
@@ -34,6 +35,7 @@ impl Config {
         Config {
             jwt_secret_key: env::var("JWT_SECRET_KEY").expect("JWT_SECRET must be set"),
             jwt_expiration_time_seconds: token_expiration,
+            jwt_company: env::var("JWT_COMPANY").expect("JWT_COMPANY must be set"),
             ldap_url: env::var("LDAP_URL").expect("LDAP_URL must be set"),
             http_bind_address: env::var("HTTP_BIND_ADDRESS").expect("HTTP_BIND_ADDRESS must be set"),
             http_port: env::var("HTTP_PORT").expect("HTTP_PORT must be set").parse().unwrap(),

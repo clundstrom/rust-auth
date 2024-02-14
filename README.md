@@ -21,6 +21,7 @@ The service uses the following environment variables:
 ```bash
 JWT_SECRET_KEY=your_secret_key
 JWT_EXPIRATION_TIME_SECONDS=3600
+JWT_COMPANY="Example AB"
 LDAP_URL=ldap://localhost:389
 
 # HTTP Server

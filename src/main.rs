@@ -33,25 +33,30 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
     let mut ldap = ldap::LdapAuthenticate::new();
 
     // Initialize the LDAP connection
-    ldap.initialize().await;
-    let create_token = ldap.authenticate(username,password).await;
+    if !ldap.initialize().await {
+        return HttpResponse::InternalServerError().body("We seem to have some troubles with \
+        our authentication services. Please try again later.");
+    }
+    let create_token = ldap.authenticate(username, password).await;
 
     // If the user is not authenticated, return an Unauthorized response
     if !create_token {
+        // Unbind the LDAP connection, we are done with it
+        ldap.unbind_ldap().await;
         return HttpResponse::Unauthorized().body("Invalid credentials");
     }
 
     // If the user is authenticated, lookup the user's permissions
     let permissions = ldap.resolve_permission(&username).await;
 
-    // Unbind the LDAP connection
+    // Unbind the LDAP connection, we are done with it
     ldap.unbind_ldap().await;
 
     // Create a JWT token for the user
     let token = match jwt::issue_token(&auth.username, permissions) {
         Ok(token) => token,
         Err(err) => {
-            log::error!("Error creating token: {}", err);
+            log::error!("Could not issue token: {}", err);
             return HttpResponse::InternalServerError()
                 .body("Something went wrong. Please try again later.");
         }
@@ -88,12 +93,13 @@ async fn validate_request(req: HttpRequest) -> HttpResponse {
     match token {
         // If a token is found, validate it
         Some(token_str) => {
-            let validation_result = validate_token(token_str).await;
+            let validation_result: Result<TokenData<JWTClaim>, Error> =
+                validate_token(token_str).await;
             handle_validation_result(validation_result).await
         }
 
         // If no token is found, return an Unauthorized response
-        None => HttpResponse::Unauthorized().body("No authorization header found"),
+        None => HttpResponse::Unauthorized().body("Missing authorization header"),
     }
 }
 

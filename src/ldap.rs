@@ -120,24 +120,25 @@ impl LdapAuthenticate {
     ///
     /// Static function to create a new LDAP connection.
     /// Returns a Result object containing the LDAP connection and the LDAP object.
-    pub async fn initialize(&mut self) {
+    pub async fn initialize(&mut self) -> bool {
         let (conn, ldap) = match LdapConnAsync::new(&CONFIG.ldap_url).await {
             Ok((conn, ldap)) => {
-                log::debug!("Connection successful.");
+                log::info!("Connection established.");
                 (conn, ldap)
             }
             Err(err) => {
                 log::error!(
-                    "Error connecting to LDAP server {}: {}",
+                    "Could not establish a connection to LDAP server {}: {}",
                     &CONFIG.ldap_url,
                     err
                 );
-                panic!("Error connecting to LDAP server")
+                return false;
             }
         };
 
         drive!(conn);
-        self.ldap = Some(ldap)
+        self.ldap = Some(ldap);
+        true
     }
 
     pub async fn unbind_ldap(&mut self) -> () {
@@ -151,7 +152,7 @@ impl LdapAuthenticate {
 
         match ldap.unbind().await {
             Ok(_) => {
-                log::debug!("Unbind successful.");
+                log::info!("Connection closed.");
             }
             Err(err) => {
                 log::error!("Failed to unbind from LDAP server: {:?}", err);
@@ -166,7 +167,7 @@ impl LdapAuthenticate {
         let entries = match search_result {
             Ok(result) => match result.success() {
                 Ok((entries, _)) => {
-                    log::info!("Search OK. Entries: {:?}", entries.len());
+                    log::info!("Permission lookup OK. Unpacking entries: {:?}", entries.len());
                     entries
                 }
                 Err(e) => {
