@@ -90,3 +90,16 @@ curl -X GET -H "Authorization: Bearer <token>" http://localhost:8080/validate_re
 ```
 
 On successful validation, the service will respond with a `200 OK` status code and the body Token valid.
+
+### Proof of concept
+
+For a proof of concept, you can use the provided `run.sh` script to start a series of containers with the following services:
+
+- OpenLDAP
+- Authio service
+- FastAPI service
+- Client performing requests to the services
+
+```bash
+./run.sh -b
+```
