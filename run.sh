@@ -47,7 +47,6 @@ sleep 5
 docker run \
   --net auth \
   --name example_requests \
-  -d \
   -e LOGIN_URL=http://authio:8080/login \
   -e PROTECTED_URL=http://api:8000/protected \
   api python "example_request.py"
