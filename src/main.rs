@@ -1,10 +1,11 @@
 use actix_web::{get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use authio::auth_request::AuthRequest;
+use authio::models::AuthRequest;
 use authio::config::CONFIG;
-use authio::jwt::{validate_token, JWTClaim};
-use authio::traits::authenticate::Authenticate;
-use authio::traits::authorize::Authorize;
-use authio::{jwt, ldap};
+use authio::models::jwt::{validate_token, JWTClaim};
+use authio::models::jwt;
+use authio::traits::Authenticate;
+use authio::traits::Authorize;
+use authio::connectors::{ldap};
 use jsonwebtoken::errors::{Error, ErrorKind};
 use jsonwebtoken::TokenData;
 use log;
@@ -30,7 +31,7 @@ async fn create_token(auth: web::Json<AuthRequest>) -> impl Responder {
     let password = &auth.password;
 
     // Create a new LDAPAuth struct with the username and password from the request
-    let mut ldap = ldap::LdapAuthenticate::new();
+    let mut ldap = ldap::LdapConnector::new();
 
     // Initialize the LDAP connection
     if !ldap.initialize().await {

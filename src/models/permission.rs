@@ -1,4 +1,4 @@
-use crate::access::Access;
+use crate::models::Access;
 use serde::{Deserialize, Serialize};
 
 /// Used to define and describe a `permission`.

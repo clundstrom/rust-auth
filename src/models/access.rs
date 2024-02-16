@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 /// * `WRITE`: The user can write or modify data.
 /// * `EXECUTE`: The user can execute certain actions.
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) enum Access {
+pub enum Access {
     READ,
     WRITE,
     EXECUTE,

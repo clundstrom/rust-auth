@@ -1,5 +1,5 @@
 use crate::config::CONFIG;
-use crate::permission::Permission;
+use crate::models::Permission;
 use chrono::{Duration, Utc};
 use jsonwebtoken::errors::Error;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};

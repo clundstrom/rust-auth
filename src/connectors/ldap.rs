@@ -1,6 +1,6 @@
-use crate::access::Access;
+use crate::models::Access;
 use crate::config::CONFIG;
-use crate::permission::Permission;
+use crate::models::Permission;
 use ldap3::{
     drive, Ldap, LdapConnAsync, LdapError, Scope, SearchEntry,
     SearchResult,
@@ -9,7 +9,7 @@ use ldap3::{
 use crate::traits::authenticate::Authenticate;
 use crate::traits::authorize::Authorize;
 
-impl Authorize for LdapAuthenticate {
+impl Authorize for LdapConnector {
     /// Resolve the permissions for a user.
     ///
     /// If an error occurs during the permission lookup, an empty vector is returned.
@@ -34,7 +34,7 @@ impl Authorize for LdapAuthenticate {
     }
 }
 
-impl Authenticate for LdapAuthenticate {
+impl Authenticate for LdapConnector {
     /// Authenticate a user against the LDAP server.
     ///
     ///
@@ -77,12 +77,12 @@ impl Authenticate for LdapAuthenticate {
     }
 }
 
-pub struct LdapAuthenticate {
+pub struct LdapConnector {
     ldap: Option<Ldap>,
 }
 
-impl LdapAuthenticate {
-    pub fn new() -> LdapAuthenticate {
+impl LdapConnector {
+    pub fn new() -> LdapConnector {
         Self { ldap: None }
     }
 
