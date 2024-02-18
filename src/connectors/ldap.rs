@@ -1,3 +1,5 @@
+use std::future::Future;
+use std::pin::Pin;
 use crate::models::Access;
 use crate::config::CONFIG;
 use crate::models::Permission;
@@ -5,9 +7,12 @@ use ldap3::{
     drive, Ldap, LdapConnAsync, LdapError, Scope, SearchEntry,
     SearchResult,
 };
-
+use crate::traits::auth::Auth;
 use crate::traits::authenticate::Authenticate;
 use crate::traits::authorize::Authorize;
+
+
+impl Auth for LdapConnector {}
 
 impl Authorize for LdapConnector {
     /// Resolve the permissions for a user.
@@ -18,19 +23,19 @@ impl Authorize for LdapConnector {
     /// * `identifier` - The identifier of the user to resolve permissions for.
     /// # Returns
     /// * A vector of `Permission` objects for the user.
-    async fn resolve_permission(&mut self, identifier: &str) -> Vec<Permission> {
-        let permissions: Vec<Permission> = vec![];
-        // Lookup the permissions for the user
-        let search_result = self.permission_lookup(identifier).await;
+    fn resolve_permission<'a>(&'a mut self, identifier: &'a str) -> Pin<Box<dyn Future<Output = Vec<Permission>> + Send + 'a>> {
+        Box::pin(async move {
+            let permissions: Vec<Permission> = vec![];
+            // Lookup the permissions for the user
+            let search_result = self.permission_lookup(identifier).await;
 
-        if search_result.len() == 0 {
-            log::info!("No permissions found for user: {}", identifier);
-            return permissions;
-        }
-
-        let permissions: Vec<Permission> = Self::parse_search_entry(search_result);
-
-        permissions
+            if search_result.len() == 0 {
+                log::info!("No permissions found for user: {}", identifier);
+                permissions
+            } else {
+                Self::parse_search_entry(search_result)
+            }
+        })
     }
 }
 
