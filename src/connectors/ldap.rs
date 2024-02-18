@@ -1,16 +1,12 @@
-use std::future::Future;
-use std::pin::Pin;
-use crate::models::Access;
 use crate::config::CONFIG;
+use crate::models::Access;
 use crate::models::Permission;
-use ldap3::{
-    drive, Ldap, LdapConnAsync, LdapError, Scope, SearchEntry,
-    SearchResult,
-};
 use crate::traits::auth::Auth;
 use crate::traits::authenticate::Authenticate;
 use crate::traits::authorize::Authorize;
-
+use ldap3::{drive, Ldap, LdapConnAsync, LdapError, Scope, SearchEntry, SearchResult};
+use std::future::Future;
+use std::pin::Pin;
 
 impl Auth for LdapConnector {}
 
@@ -23,7 +19,10 @@ impl Authorize for LdapConnector {
     /// * `identifier` - The identifier of the user to resolve permissions for.
     /// # Returns
     /// * A vector of `Permission` objects for the user.
-    fn resolve_permission<'a>(&'a mut self, identifier: &'a str) -> Pin<Box<dyn Future<Output = Vec<Permission>> + Send + 'a>> {
+    fn resolve_permission<'a>(
+        &'a mut self,
+        identifier: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Vec<Permission>> + Send + 'a>> {
         Box::pin(async move {
             let permissions: Vec<Permission> = vec![];
             // Lookup the permissions for the user
@@ -42,43 +41,47 @@ impl Authorize for LdapConnector {
 impl Authenticate for LdapConnector {
     /// Authenticate a user against the LDAP server.
     ///
-    ///
-    ///
     /// # Arguments
     /// * `username` - The username of the user to authenticate.
     /// * `password` - The password of the user to authenticate.
     /// # Returns
     /// * `true` if the user is authenticated, `false` otherwise.
-    async fn authenticate(&mut self, username: &str, password: &str) -> bool {
-        // The bind_dn is the user's username with the AD_FORMAT appended
-        // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
-        let bind_dn: String = format!("CN={},{}", username, CONFIG.ad_base_dn);
+    fn authenticate<'a>(
+        &'a mut self,
+        username: &'a str,
+        password: &'a str,
+    ) -> Pin<Box<dyn Future<Output = bool> + Send + 'a>> {
+        Box::pin(async move {
+            // The bind_dn is the user's username with the AD_FORMAT appended
+            // Example: CN=jsmith,OU=Users,OU=Accounts,DC=example,DC=com
+            let bind_dn: String = format!("CN={},{}", username, CONFIG.ad_base_dn);
 
-        let ldap = match self.ldap.as_mut() {
-            Some(ldap) => ldap,
-            None => {
-                log::error!("LDAP connection not initialized");
-                return false;
-            }
-        };
+            let ldap = match self.ldap.as_mut() {
+                Some(ldap) => ldap,
+                None => {
+                    log::error!("LDAP connection not initialized");
+                    return false;
+                }
+            };
 
-        let is_authenticated: bool = match ldap.simple_bind(&bind_dn, password).await {
-            Ok(res) => {
-                if res.success().is_ok() {
-                    log::debug!("Bind successful: Authenticated");
-                    true
-                } else {
-                    log::debug!("Bind failed: Invalid credentials");
+            let is_authenticated: bool = match ldap.simple_bind(&bind_dn, password).await {
+                Ok(res) => {
+                    if res.success().is_ok() {
+                        log::debug!("Bind successful: Authenticated");
+                        true
+                    } else {
+                        log::debug!("Bind failed: Invalid credentials");
+                        false
+                    }
+                }
+                Err(err) => {
+                    log::error!("Bind failed: {}", err);
                     false
                 }
-            }
-            Err(err) => {
-                log::error!("Bind failed: {}", err);
-                false
-            }
-        };
+            };
 
-        return is_authenticated;
+            return is_authenticated;
+        })
     }
 }
 
@@ -172,7 +175,10 @@ impl LdapConnector {
         let entries = match search_result {
             Ok(result) => match result.success() {
                 Ok((entries, _)) => {
-                    log::info!("Permission lookup OK. Unpacking entries: {:?}", entries.len());
+                    log::info!(
+                        "Permission lookup OK. Unpacking entries: {:?}",
+                        entries.len()
+                    );
                     entries
                 }
                 Err(e) => {
