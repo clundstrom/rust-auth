@@ -10,6 +10,8 @@ use jsonwebtoken::errors::{Error, ErrorKind};
 use jsonwebtoken::TokenData;
 use log;
 
+#[cfg(test)]
+pub mod tests;
 /// Endpoint to create a JWT token
 ///
 /// This function is responsible for creating a JWT token. It is an asynchronous function that returns a

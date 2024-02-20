@@ -5,6 +5,3 @@ pub mod connectors;
 
 pub mod models;
 pub mod config;
-
-#[cfg(test)]
-pub mod tests;
